@@ -1,110 +1,62 @@
-from docker.models.containers import Container
 from .driver import Driver
-from .exceptions import InvalidDriverError
-from models.sample import SampleSet, Sample
-from monitoring import Monitoring
+from .exceptions import InvalidDriverError, NotRunningError
+from models.sample import Sample
+from typing import Union
 
 import docker
-import asyncio
-import queue
-import threading
-
-q = queue.Queue()
-
-def getSamples(container: Container, q):
-    def calculate_cpu_percent(d):
-        # length indicates the amout of available cpus being used
-        cpu_count = len(d["cpu_stats"]["cpu_usage"]["percpu_usage"])
-        cpu_percent = 0.0
-        cpu_delta = float(d["cpu_stats"]["cpu_usage"]["total_usage"]) - float(d["precpu_stats"]["cpu_usage"]["total_usage"])
-        system_delta = float(d["cpu_stats"]["system_cpu_usage"]) - float(d["precpu_stats"]["system_cpu_usage"])
-        if system_delta > 0.0:
-            cpu_percent = cpu_delta / system_delta * 100.0 * cpu_count
-        return cpu_percent
-
-    while True:
-        tmp = container.stats(stream=False)
-        q.put(Sample(calculate_cpu_percent(tmp), tmp["memory_stats"]["usage"]))
-
-async def sampleStats(container: Container, samples):
-
-    def calculate_cpu_percent(d):
-        # length indicates the amout of available cpus being used
-        cpu_count = len(d["cpu_stats"]["cpu_usage"]["percpu_usage"])
-        cpu_percent = 0.0
-        cpu_delta = float(d["cpu_stats"]["cpu_usage"]["total_usage"]) - float(d["precpu_stats"]["cpu_usage"]["total_usage"])
-        system_delta = float(d["cpu_stats"]["system_cpu_usage"]) - float(d["precpu_stats"]["system_cpu_usage"])
-        if system_delta > 0.0:
-            cpu_percent = cpu_delta / system_delta * 100.0 * cpu_count
-        return cpu_percent
-
-    sampleslst=[]
-    stats=[]
-    for i in range(0,samples):
-        tmp = container.stats(stream=False)
-        sampleslst.append(Sample(calculate_cpu_percent(tmp), tmp["memory_stats"]["usage"]))
-        stats.append(tmp)
-        print(f"Sample {i+1}/{samples}")
-        await asyncio.sleep(0.2)
-
-    return SampleSet(sampleslst)
 
 class DockerDriver:
 
-    def __init__(self):
+    def __init__(self, raise_errors=True):
         if not issubclass(DockerDriver, Driver):
             raise InvalidDriverError(f"{DockerDriver.__name__} is not a valid suivi driver.")
 
-        self.loop = asyncio.get_event_loop()
+        self.raise_errors = raise_errors
 
-    def create(self):
-        self.client = docker.from_env()
-        self.container = self.client.containers.run("ubuntu:latest", "tail -f /dev/null", detach=True)
+    def create(self, image: str, command: str):
+        self._client = docker.from_env()
+        self._container = self._client.containers.run(image, command, detach=True)
+
+        return self._container.id
 
     def logs(self):
-        if not self.container:
-            print("Container not running.")
+        if not self._container:
+            if self.raise_errors: raise NotRunningError()
             return
 
-        print(self.container.logs())
+        return self._container.logs()
 
-    def mon_start(self):
-        self.loop.run_forever()
-
-    def mon_end(self):
-        pass
-
-    def stats(self, samples=10):
-        if not self.container:
-            print("Container not running.")
+    def stats(self) -> Union[Sample, None]:
+        if not self._container:
+            if self.raise_errors: raise NotRunningError()
             return
-        def calculate_cpu_percent(d):
+
+        def calc_cpu_percent(dmp):
             # length indicates the amout of available cpus being used
-            cpu_count = len(d["cpu_stats"]["cpu_usage"]["percpu_usage"])
+            cpu_count = len(dmp["cpu_stats"]["cpu_usage"]["percpu_usage"])
             cpu_percent = 0.0
-            cpu_delta = float(d["cpu_stats"]["cpu_usage"]["total_usage"]) - float(d["precpu_stats"]["cpu_usage"]["total_usage"])
-            system_delta = float(d["cpu_stats"]["system_cpu_usage"]) - float(d["precpu_stats"]["system_cpu_usage"])
+            cpu_delta = float(dmp["cpu_stats"]["cpu_usage"]["total_usage"]) - float(dmp["precpu_stats"]["cpu_usage"]["total_usage"])
+            system_delta = float(dmp["cpu_stats"]["system_cpu_usage"]) - float(dmp["precpu_stats"]["system_cpu_usage"])
             if system_delta > 0.0:
                 cpu_percent = cpu_delta / system_delta * 100.0 * cpu_count
             return cpu_percent
 
-        tmp = self.container.stats(stream=False)
-        return Sample(calculate_cpu_percent(tmp), tmp["memory_stats"]["usage"])
-        #t1 = threading.Thread(target=getSamples, name=getSamples, args=(self.container, q,))
-        #t1.start()
-        #while True:
-        #    value = q.get()
-        #    print(value.cpupercent)
-        #smplset = asyncio.run(sampleStats(self.container, samples))
-        #return smplset.export()
+        tmp = self._container.stats(stream=False)
+        return Sample(calc_cpu_percent(tmp), tmp["memory_stats"]["usage"])
 
     def stop(self):
-        if not self.container:
-            print("Container not running.")
+        if not self._container:
+            if self.raise_errors: raise NotRunningError()
             return
+        self._container.stop()
 
-        self.container.stop()
-        print("Container stopped.")
+    def cleanup(self, volumes=True):
+        if not self._container:
+            if self.raise_errors: raise NotRunningError()
+            return
+        self._container.remove(v=volumes)
 
     def __del__(self):
-        self.stop()
+        if self._container:
+            self.stop()
+            self.cleanup()

@@ -6,9 +6,8 @@ from threading import Thread
 if __name__ == '__main__':
     try:
         eas = DockerDriver()
-        eas.create()
-        eas.logs()
-        #print(eas.stats())
+        eas.create("ubuntu:latest", "tail -f /dev/null")
+        print(eas.stats())
         eee = Monitoring(eas)
         uuu = Monitoring(eas)
         eee.start()
