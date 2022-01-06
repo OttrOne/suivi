@@ -1,5 +1,5 @@
 from .driver import Driver
-from .exceptions import InvalidDriverError, NotRunningError
+from .exceptions import InvalidDriver, NotRunning, ImageNotFound
 from models.sample import Sample
 from typing import Union
 
@@ -9,31 +9,37 @@ class DockerDriver:
 
     def __init__(self, raise_errors=True):
         if not issubclass(DockerDriver, Driver):
-            raise InvalidDriverError(f"{DockerDriver.__name__} is not a valid suivi driver.")
+            raise InvalidDriver(f"{DockerDriver.__name__} is not a valid suivi driver.")
 
         self.raise_errors = raise_errors
+        self._container = None
 
     def create(self, image: str, command: str):
         self._client = docker.from_env()
-        self._container = self._client.containers.run(image, command, detach=True)
+        try:
+            self._container = self._client.containers.run(image, command, detach=True)
+        except docker.errors.ImageNotFound:
+            raise ImageNotFound()
 
         return self._container.id
 
     def logs(self):
         if not self._container:
-            if self.raise_errors: raise NotRunningError()
+            if self.raise_errors: raise NotRunning()
             return
 
         return self._container.logs()
 
     def stats(self) -> Union[Sample, None]:
         if not self._container:
-            if self.raise_errors: raise NotRunningError()
+            if self.raise_errors: raise NotRunning()
             return
 
         def calc_cpu_percent(dmp):
             # length indicates the amout of available cpus being used
-            cpu_count = len(dmp["cpu_stats"]["cpu_usage"]["percpu_usage"])
+            print (dmp)
+
+            cpu_count = int(dmp["cpu_stats"]["online_cpus"])
             cpu_percent = 0.0
             cpu_delta = float(dmp["cpu_stats"]["cpu_usage"]["total_usage"]) - float(dmp["precpu_stats"]["cpu_usage"]["total_usage"])
             system_delta = float(dmp["cpu_stats"]["system_cpu_usage"]) - float(dmp["precpu_stats"]["system_cpu_usage"])
@@ -46,13 +52,13 @@ class DockerDriver:
 
     def stop(self):
         if not self._container:
-            if self.raise_errors: raise NotRunningError()
+            #if self.raise_errors: raise NotRunning()
             return
         self._container.stop()
 
     def cleanup(self, volumes=True):
         if not self._container:
-            if self.raise_errors: raise NotRunningError()
+            if self.raise_errors: raise NotRunning()
             return
         self._container.remove(v=volumes)
 

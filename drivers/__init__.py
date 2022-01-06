@@ -1,2 +1,2 @@
 from .docker import DockerDriver
-from .exceptions import InvalidDriverError
+from .exceptions import InvalidDriver, DriverNotFound, ImageNotFound
