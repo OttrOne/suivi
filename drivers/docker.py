@@ -82,7 +82,7 @@ class DockerDriver:
                 image,
                 command,
                 network=self._network.name,
-                name=f"{self._container.name}-companion",
+                name=f"{self._container.name}-companion-{id_generator()}",
                 detach=True
             )
         except derr.ImageNotFound:

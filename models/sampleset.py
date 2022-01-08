@@ -1,5 +1,6 @@
 from math import ceil
 from utils import hrsize
+from json import dumps
 from . import Sample
 
 class SampleSet:
@@ -70,3 +71,6 @@ class SampleSet:
                 "samples" : mem_samples,
             },
         }
+
+    def json(self):
+        return dumps(self.export(), separators=(',', ':'))

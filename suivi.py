@@ -1,4 +1,3 @@
-import time
 from drivers import DockerDriver, KubernetesDriver, InvalidDriver, DriverNotFound, ImageNotFound
 from drivers.driver import Driver
 from monitoring import Monitoring
@@ -44,6 +43,14 @@ if __name__ == '__main__':
                        default='',
                        help='the command to run in the container')
 
+    parser.add_argument('-n',
+                       dest='pcycles',
+                       action='store',
+                       metavar='CYCLES',
+                       type=int,
+                       default=1,
+                       help='the amount of pen cycles')
+
     parser.add_argument('-s',
                        '--silent',
                        action='store_true',
@@ -54,6 +61,12 @@ if __name__ == '__main__':
                        action='store',
                        metavar='FILE',
                        help='configuration file')
+
+    parser.add_argument('-o',
+                       dest='output',
+                       action='store',
+                       metavar='FILE',
+                       help='monitoring output file')
 
     args = parser.parse_args()
     config = None
@@ -72,8 +85,12 @@ if __name__ == '__main__':
         pen = Penetration(client, config['penetration'] if config and 'penetration' in config else None)
 
         mon.start()
-        pen.penetrate()
+        for i in range(args.pcycles):
+            pen.penetrate()
         mon.stop()
+
+        if args.output:
+            Path(args.output).write_text(mon.export().json(), encoding='UTF-8')
 
         print(client.stats())
         print(mon.export())
