@@ -78,22 +78,22 @@ if __name__ == '__main__':
 
         client = get_driver(args.driver)()
         client.create(args.image, args.command)
-        print(args.config)
-        print(client.stats())
         mon = Monitoring(client)
 
         pen = Penetration(client, config['penetration'] if config and 'penetration' in config else None)
 
         mon.start()
+        print(f"Start monitoring")
         for i in range(args.pcycles):
+            print(f"Start penetration stage {i}/{args.pcycles}")
             pen.penetrate()
         mon.stop()
+        print(f"End monitoring")
 
         if args.output:
             Path(args.output).write_text(mon.export().json(), encoding='UTF-8')
+            print(f"Wrote monitoring results to {args.output}")
 
-        print(client.stats())
-        print(mon.export())
         print(client.forecast(mon.export()))
         del client
     except (DriverNotFound, InvalidDriver, ImageNotFound) as err:
