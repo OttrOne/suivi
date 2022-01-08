@@ -2,7 +2,7 @@ from drivers.driver import Driver
 import time
 from threading import Thread
 
-from models.sample import SampleSet
+from models import SampleSet
 
 class Monitoring:
 

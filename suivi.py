@@ -1,22 +1,31 @@
 import time
-from drivers import DockerDriver, InvalidDriver, DriverNotFound, ImageNotFound
+from drivers import DockerDriver, KubernetesDriver, InvalidDriver, DriverNotFound, ImageNotFound
 from drivers.driver import Driver
 from monitoring import Monitoring
 from threading import Thread
+from strictyaml import load
+from path import Path
+from utils import handle_variables
 import argparse
+
+from penetration import Penetration
 
 def get_driver(name: str) -> Driver:
 
     drivers = {
         "docker": DockerDriver,
+        "kubernetes": KubernetesDriver,
     }
     driver = drivers.get(name)
 
     if driver is None:
         raise DriverNotFound()
 
-    return driver
+    # check driver integrity
+    if not issubclass(driver, Driver):
+        raise InvalidDriver(f"{driver.__name__} is not a valid suivi driver.")
 
+    return driver
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some integers.',
@@ -40,19 +49,37 @@ if __name__ == '__main__':
                        action='store_true',
                        help='suppress status i/o and only print results')
 
+    parser.add_argument('-f',
+                       dest='config',
+                       action='store',
+                       metavar='FILE',
+                       help='configuration file')
+
     args = parser.parse_args()
+    config = None
 
     try:
-        eas = get_driver(args.driver)()
-        eas.create(args.image, args.command)
+        if args.config:
+            config = load(handle_variables(Path(args.config).text())).data
+            print(config)
 
-        print(eas.stats())
-        eee = Monitoring(eas)
-        eee.start()
-        for i in range(10):
-            #print(eas.stats().cpupercent)
-            time.sleep(1.4)
-        eee.stop()
-        print(eee.export().export())
+        client = get_driver(args.driver)()
+        client.create(args.image, args.command)
+        print(args.config)
+        print(client.stats())
+        mon = Monitoring(client)
+
+        pen = Penetration(client, config['penetration'] if config and 'penetration' in config else None)
+
+        mon.start()
+        pen.penetrate()
+        mon.stop()
+
+        print(client.stats())
+        print(mon.export())
+        print(client.forecast(mon.export()))
+        del client
     except (DriverNotFound, InvalidDriver, ImageNotFound) as err:
         print(err)
+    except FileNotFoundError:
+        print(f"The configuration file '{args.config}' could not be found.")
