@@ -1,3 +1,4 @@
+from re import S
 from .exceptions import NotRunning, ImageNotFound
 from models import Sample, SampleSet
 from typing import Union
@@ -36,7 +37,12 @@ class DockerDriver:
         except derr.ImageNotFound:
             raise ImageNotFound()
 
+        self.hostname = f"suivi-{id}"
+
         return self._container.id
+
+    def wait(self, name):
+        self._companion.wait()
 
     def logs(self):
         if not self._container:
@@ -53,7 +59,7 @@ class DockerDriver:
         def calc_cpu_percent(dmp):
             # length indicates the amout of available cpus being used
             if "online_cpus" not in dmp["cpu_stats"]:
-                return 0.0
+                return None
 
             cpu_count = int(dmp["cpu_stats"]["online_cpus"])
             cpu_percent = 0.0
@@ -67,7 +73,13 @@ class DockerDriver:
         if "online_cpus" in tmp["cpu_stats"] and not self._online_cpu:
                 self._online_cpu = tmp["cpu_stats"]["online_cpus"]
 
-        return Sample(calc_cpu_percent(tmp), tmp["memory_stats"]["usage"] if "usage" in tmp["memory_stats"] else 0)
+        cpu = calc_cpu_percent(tmp)
+        mem = "usage" in tmp["memory_stats"]
+
+        if cpu and mem:
+            return Sample(cpu, int(tmp["memory_stats"]["usage"]))
+
+        return None
 
     def stop(self):
         if not self._container:
@@ -119,7 +131,3 @@ class DockerDriver:
 
         return f"--cpus={cpu:2.2f} --memory={mem}"
 
-    def __del__(self):
-        if self._container:
-            self.stop()
-            self.cleanup()

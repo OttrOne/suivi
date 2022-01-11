@@ -29,11 +29,9 @@ class Penetration:
     def penetrate(self):
 
         context = {
-            'HOST': self._client._container.name,
+            'HOST': self._client.hostname,
         }
 
-        #self.command = [handle_variables(command, context) for command in self.command]
-        self._client.join(self.image, handle_variables(self.command, context))
-        self._client._companion.wait()
-        # print(self._client._companion.logs())
+        companion = self._client.join(self.image, handle_variables(self.command, context))
+        self._client.wait(companion)
 
