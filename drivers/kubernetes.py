@@ -134,7 +134,7 @@ class KubernetesDriver:
     def forecast(self, samples: SampleSet) -> str:
 
         samples = samples.export()
-        cpu = samples['cpu']['80%'] / 100.0
+        cpu = samples['cpu']['80%'] if samples['cpu']['80%'] > 0.005 else 0.005
         mem = samples['memory']['80%']
 
         fc = {

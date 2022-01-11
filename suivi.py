@@ -80,7 +80,6 @@ if __name__ == '__main__':
         client = get_driver(args.driver)()
         try:
             client.create(args.image, args.command)
-            client.logs()
 
             mon = Monitoring(client)
 

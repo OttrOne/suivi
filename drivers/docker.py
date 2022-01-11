@@ -56,24 +56,24 @@ class DockerDriver:
             if self.raise_errors: raise NotRunning()
             return
 
-        def calc_cpu_percent(dmp):
+        def calc_cpu(dmp):
             # length indicates the amout of available cpus being used
             if "online_cpus" not in dmp["cpu_stats"]:
                 return None
 
             cpu_count = int(dmp["cpu_stats"]["online_cpus"])
-            cpu_percent = 0.0
+            cpu = 0.0
             cpu_delta = float(dmp["cpu_stats"]["cpu_usage"]["total_usage"]) - float(dmp["precpu_stats"]["cpu_usage"]["total_usage"])
             system_delta = float(dmp["cpu_stats"]["system_cpu_usage"]) - float(dmp["precpu_stats"]["system_cpu_usage"])
             if system_delta > 0.0 and cpu_delta > 0.0:
-                cpu_percent = (cpu_delta / system_delta) * 100.0 * cpu_count
+                cpu = (cpu_delta / system_delta) * cpu_count
 
-            return cpu_percent
+            return cpu
         tmp = self._container.stats(stream=False)
         if "online_cpus" in tmp["cpu_stats"] and not self._online_cpu:
                 self._online_cpu = tmp["cpu_stats"]["online_cpus"]
 
-        cpu = calc_cpu_percent(tmp)
+        cpu = calc_cpu(tmp)
         mem = "usage" in tmp["memory_stats"]
 
         if cpu and mem:
@@ -118,7 +118,7 @@ class DockerDriver:
                 num /= 1000.0
 
         samples = samples.export()
-        cpu = samples['cpu']['80%'] / 100.0
+        cpu = samples['cpu']['80%']
         mem = samples['memory']['80%']
 
         # minimum for mem is 6m

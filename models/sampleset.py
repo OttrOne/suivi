@@ -5,7 +5,7 @@ from . import Sample
 
 class SampleSet:
 
-    round = 3
+    round = 5
 
     def __init__(self, samples) -> None:
         if not (isinstance(samples, list) and all(isinstance(sample, Sample) for sample in samples)):
@@ -48,13 +48,13 @@ class SampleSet:
 
         data = self.export()
         return (
-            f"CPU (max/avg/80%) {data['cpu']['max']}% / {data['cpu']['average']}% / {data['cpu']['80%']}% \n"
+            f"CPU (max/avg/80%) {data['cpu']['max'] * 100.0}% / {data['cpu']['average'] * 100.0}% / {data['cpu']['80%'] * 100.0}% \n"
             f"MEM (max/avg/80%) {hrsize(data['memory']['max'])} / {hrsize(data['memory']['average'])} / {hrsize(data['memory']['80%'])}"
         )
 
     def export(self):
 
-        cpu_samples = [sample.cpupercent for sample in self.samples]
+        cpu_samples = [sample.cpu for sample in self.samples]
         mem_samples = [sample.memory for sample in self.samples]
         time_samples = [sample.timestamp for sample in self.samples]
 

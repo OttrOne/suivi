@@ -4,14 +4,14 @@ from time import time_ns
 
 class Sample:
 
-    cpupercent : float
+    cpu : float
     memory: int
-    round: int = 3
+    round: int = 5
 
     def __init__(self, cpu: int, mem: int) -> None:
-        self.cpupercent = cpu
+        self.cpu = cpu
         self.memory = mem
         self.timestamp = time_ns()
 
     def __str__(self) -> str:
-        return f"CPU: {round(self.cpupercent,self.round)}%, MEM: {hrsize(self.memory)}"
+        return f"CPU: {round(self.cpu * 100.0,self.round)}%, MEM: {hrsize(self.memory)}"
