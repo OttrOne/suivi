@@ -1,3 +1,4 @@
+from time import sleep
 from drivers import DockerDriver, KubernetesDriver, InvalidDriver, DriverNotFound, ImageNotFound
 from drivers.driver import Driver
 from monitoring import Monitoring
@@ -77,26 +78,39 @@ if __name__ == '__main__':
             print(config)
 
         client = get_driver(args.driver)()
-        client.create(args.image, args.command)
-        mon = Monitoring(client)
+        try:
+            client.create(args.image, args.command)
+            client.logs()
 
-        pen = Penetration(client, config['penetration'] if config and 'penetration' in config else None)
+            mon = Monitoring(client)
 
-        mon.start()
-        print(f"Start monitoring")
-        for i in range(args.pcycles):
-            print(f"Start penetration stage {i}/{args.pcycles}")
-            pen.penetrate()
-        mon.stop()
-        print(f"End monitoring")
+            pen = Penetration(client, config['penetration'] if config and 'penetration' in config else None)
 
-        if args.output:
-            Path(args.output).write_text(mon.export().json(), encoding='UTF-8')
-            print(f"Wrote monitoring results to {args.output}")
+            print(f"Start monitoring")
+            mon.start()
+            print(f"Monitoring running")
 
-        print(client.forecast(mon.export()))
-        del client
+            for i in range(args.pcycles):
+                print(f"Start penetration stage {i+1}/{args.pcycles}")
+                pen.penetrate()
+            mon.stop()
+            print(f"End monitoring")
+
+            if args.output:
+                Path(args.output).write_text(mon.export().json(), encoding='UTF-8')
+                print(f"Wrote monitoring results to {args.output}")
+
+            print(mon.export())
+            print(client.forecast(mon.export()))
+        except:
+            pass
+        finally:
+            client.stop()
+            client.cleanup()
+
     except (DriverNotFound, InvalidDriver, ImageNotFound) as err:
         print(err)
     except FileNotFoundError:
         print(f"The configuration file '{args.config}' could not be found.")
+    except Exception as err:
+        print(err)
