@@ -1,3 +1,5 @@
+driver:
+  namespace: suivi
 
 penetration:
   image: jordi/ab

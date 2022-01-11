@@ -2,7 +2,7 @@ from os import stat
 
 from .driver import Driver
 from .exceptions import InvalidDriver, NotRunning, ImageNotFound
-from kubernetes import client, config
+from kubernetes import client, config as kubeconfig
 from utils import id_generator
 from models import Sample, SampleSet
 from typing import Union
@@ -48,13 +48,17 @@ def kubernetes_desuffix(value: str):
 
 class KubernetesDriver:
 
-    def __init__(self, raise_errors=True):
+    def __init__(self, config=None, raise_errors=True):
 
         self.raise_errors = raise_errors
         self._container = None
-        config.load_kube_config()
+        kubeconfig.load_kube_config()
         self._client = client.CoreV1Api()
         self.namespace = 'default'
+
+        if config and 'namespace' in config:
+            self.namespace = config['namespace']
+
         self.hostname = None
 
     def _ready(self, name):

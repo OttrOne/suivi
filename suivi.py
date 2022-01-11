@@ -75,9 +75,9 @@ if __name__ == '__main__':
     try:
         if args.config:
             config = load(handle_variables(Path(args.config).text())).data
-            print(config)
+            print("Config loaded.")
 
-        client = get_driver(args.driver)()
+        client = get_driver(args.driver)(config['driver'] if config and 'driver' in config else None)
         try:
             client.create(args.image, args.command)
 

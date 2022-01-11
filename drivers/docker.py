@@ -9,7 +9,7 @@ from time import sleep
 
 class DockerDriver:
 
-    def __init__(self, raise_errors=True):
+    def __init__(self, config=None, raise_errors=True):
 
         self.raise_errors = raise_errors
         self._container = None
