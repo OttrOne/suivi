@@ -56,8 +56,14 @@ class SampleSet:
 
         cpu_samples = [sample.cpupercent for sample in self.samples]
         mem_samples = [sample.memory for sample in self.samples]
+        time_samples = [sample.timestamp for sample in self.samples]
 
         return {
+            "timestamp" : {
+                "duration" : time_samples[-1] - time_samples[0] if len(time_samples) >= 2 else 0,
+                "delta" : time_samples[1] - time_samples[0] if len(time_samples) >= 2 else 0, # adjust for dynamic approach
+                "all" : time_samples
+            },
             "cpu" : {
                 "max" : self._max(cpu_samples, self.round),
                 "80%" : self._percentile(cpu_samples, 80, self.round),
