@@ -21,6 +21,12 @@ class Monitoring:
         self.t = Thread(target=self._procedure.run)
         self.t.start()
 
+        # wait for metrics to be available
+        while True:
+            if self._procedure.tracking:
+                break
+            time.sleep(1)
+
     def export(self):
         return SampleSet(self._procedure._samples)
 
@@ -31,11 +37,19 @@ class MonitoringProcedure:
         self._running = True
         self._samples = []
         self.sleep = sleep
+        self.tracking = False
 
     def stop(self):
         self._running = False
+        self.tracking = False
 
     def run(self):
          while self._running:
-            self._samples.append(self.driver.stats())
+            stats = self.driver.stats()
+            if stats:
+                self.tracking = True
+                self._samples.append(stats)
+            elif self.tracking:
+                print("metrics not available anymore")
+                break
             time.sleep(self.sleep)
