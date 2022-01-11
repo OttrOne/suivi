@@ -57,6 +57,12 @@ class KubernetesDriver:
         self.namespace = 'default'
         self.hostname = None
 
+    def _ready(self, name):
+        res = self._client.read_namespaced_pod_status(name, self.meta.namespace)
+        if res.status.phase == 'Running':
+            return True
+        return False
+
     def create(self, image: str, command: Union[None, str]):
         id = id_generator()
 
@@ -80,8 +86,7 @@ class KubernetesDriver:
         # wait for readyness
         tries = 30
         for i in range(tries):
-            res = self._client.read_namespaced_pod_status(self.meta.name, self.meta.namespace)
-            if res.status.phase == 'Running':
+            if self._ready(self.meta.name):
                 return True
             sleep(1)
 
