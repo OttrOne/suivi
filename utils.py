@@ -1,8 +1,8 @@
-from string import ascii_uppercase, digits
+from string import ascii_lowercase, digits
 from random import choice
 from re import compile
 
-def id_generator(length=8, chars=ascii_uppercase + digits):
+def id_generator(length=8, chars=ascii_lowercase + digits):
     return ''.join(choice(chars) for _ in range(length))
 
 def hrsize(num: int) -> str:
