@@ -1,6 +1,3 @@
-from os import stat
-
-from .driver import Driver
 from .exceptions import InvalidDriver, NotRunning, ImageNotFound
 from kubernetes import client, config as kubeconfig
 from utils import id_generator
