@@ -1,6 +1,5 @@
 import unittest
-from unittest import result
-from models import SampleSet, Sample
+from models import SampleSet, Sample, Config
 
 class TestSample(unittest.TestCase):
 
@@ -35,6 +34,14 @@ class TestSampleSet(unittest.TestCase):
         result = SampleSet(data)
         self.assertEqual(result._max([sample.cpu for sample in result.samples]), 4)
 
+
+class TestConfig(unittest.TestCase):
+
+    def test_init(self):
+        # might not be the best test case with a file dependency...
+        config = Config('test.yaml')
+        self.assertEqual(config.section('fail'), {})
+        self.assertLessEqual({'image' : 'jordi/ab'}.items(), config.section('penetration').items())
 
 if __name__ == '__main__':
     unittest.main()
