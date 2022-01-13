@@ -1,6 +1,8 @@
+---
 driver:
-  namespace: suivi
+  namespace: default
+  image: nginx
 
 penetration:
   image: jordi/ab
-  cmd: -v 2 -k -c 10 -n 100000 ${HOST}:80/
+  cmd: "-v 2 -k -c 10 -n 100000 {{ HOSTNAME }}:80/"

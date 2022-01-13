@@ -5,7 +5,7 @@ from typing import Union
 from utils import id_generator
 from docker import from_env, errors as derr
 from math import ceil
-from time import sleep
+
 
 class DockerDriver:
 
@@ -108,6 +108,7 @@ class DockerDriver:
             return
         self._container.remove(v=volumes)
         self._network.remove()
+        self._companion.remove()
 
     def forecast(self, samples: SampleSet) -> str:
 

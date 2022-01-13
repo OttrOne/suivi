@@ -1,8 +1,7 @@
-from time import sleep
 from drivers import DockerDriver, KubernetesDriver, InvalidDriver, DriverNotFound, ImageNotFound
 from drivers.driver import Driver
+from models.config import Config
 from monitoring import Monitoring
-from threading import Thread
 from strictyaml import load
 from path import Path
 from utils import handle_variables
@@ -59,6 +58,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-f',
                        dest='config',
+                       default=None,
                        action='store',
                        metavar='FILE',
                        help='configuration file')
@@ -73,17 +73,23 @@ if __name__ == '__main__':
     config = None
 
     try:
-        if args.config:
-            config = load(handle_variables(Path(args.config).text())).data
-            print("Config loaded.")
+        config = Config(args.config)
 
-        client = get_driver(args.driver)(config['driver'] if config and 'driver' in config else None)
+        client = get_driver(args.driver)(config.section('driver'))
         try:
             client.create(args.image, args.command)
 
             mon = Monitoring(client)
 
-            pen = Penetration(client, config['penetration'] if config and 'penetration' in config else None)
+            pen = Penetration(
+                client,
+                config.section(
+                    'penetration',
+                    {
+                        'HOSTNAME' : client.hostname
+                    }
+                )
+            )
 
             print(f"Start monitoring")
             mon.start()

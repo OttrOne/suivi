@@ -1,10 +1,11 @@
+from typing import Union
 from path import Path
 from strictyaml import load
 from re import compile
 
 class Config:
 
-    def __init__(self, path: str):
+    def __init__(self, path: Union[str, None]):
         """Create a Config Object.
 
         Contains configuration given by the user including penetration information,
@@ -14,7 +15,7 @@ class Config:
         self                   -- This object.
         path                   -- String with the path to the config file.
         """
-        self._config = load(Path(path).read_text('UTF-8')).data
+        self._config = load(Path(path).read_text('UTF-8')).data if path else {}
 
     def section(self, section: str, context: dict = {}) -> dict:
         """Extract a section of the configuration.
