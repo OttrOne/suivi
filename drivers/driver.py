@@ -14,6 +14,8 @@ class DriverMeta(type):
                 hasattr(__subclass, 'stop') and callable(__subclass.stop)
             ) and (
                 hasattr(__subclass, 'cleanup') and callable(__subclass.cleanup)
+            ) and (
+                hasattr(__subclass, 'wait') and callable(__subclass.wait)
             )
 
 class Driver(metaclass=DriverMeta):

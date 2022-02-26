@@ -7,7 +7,7 @@ from models import SampleSet
 class Monitoring:
 
     def __init__(self, driver: Driver):
-        self.sleep = 1.0
+        self.sleep = 0.5
         self._procedure = MonitoringProcedure(driver, self.sleep)
 
     def stop(self):
@@ -15,7 +15,7 @@ class Monitoring:
         self.t.join()
 
     def start(self):
-        if self.sleep != 1.0:
+        if self.sleep != 0.5:
             self._procedure.sleep = self.sleep
 
         self.t = Thread(target=self._procedure.run)
@@ -25,7 +25,7 @@ class Monitoring:
         while True:
             if self._procedure.tracking:
                 break
-            time.sleep(1)
+            time.sleep(0.5)
 
     def export(self):
         return SampleSet(self._procedure._samples)
