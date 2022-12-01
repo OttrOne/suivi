@@ -1,0 +1,7 @@
+@startuml Schichtendiagramm
+!theme cerulean-outline
+left to right direction
+[API] ..> [Domain] : access
+[CLI] ..> [Domain] : access
+[Domain] ..> [Data Source]  : access
+@enduml

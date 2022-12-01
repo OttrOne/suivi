@@ -1,0 +1,6 @@
+@startuml Abhaengigkeiten2
+!theme cerulean-outline
+[A] .right.> Interface
+Interface <-right- [B]
+Interface <-right- [C]
+@enduml

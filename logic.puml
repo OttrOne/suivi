@@ -1,0 +1,14 @@
+@startuml Business Logic
+!theme cerulean-outline
+left to right direction
+[Penetration] ..> DriverInterface : use
+[Monitoring] ..> DriverInterface : read
+[Monitoring] ..> DataAccess : write
+[Forecaster] ..> DataAccess : read
+[Forecaster] ..> DriverInterface : write
+
+package "Driver" {
+DriverInterface -- [Platform Driver 1] : implement
+DriverInterface -- [Platform Driver 2] : implement
+}
+@enduml

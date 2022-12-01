@@ -1,0 +1,14 @@
+@startuml Driver
+!theme cerulean-outline
+interface Driver {
+  + hostname
+  + image
+  + command
+  + create(image, command)
+  + stop()
+  + cleanup()
+  + logs()
+  + stats()
+  + forecast(data)
+}
+@enduml

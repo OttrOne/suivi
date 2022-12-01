@@ -1,0 +1,7 @@
+@startuml Workflow
+start
+:start **Subject**;
+:start **Monitoring**;
+
+stop
+@enduml

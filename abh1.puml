@@ -1,0 +1,5 @@
+@startuml Abhaengigkeiten1
+!theme cerulean-outline
+[A] ..> [B]
+[A] ..> [C]
+@enduml
